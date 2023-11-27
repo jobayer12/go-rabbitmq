@@ -31,3 +31,11 @@ docker exec rabbitmq rabbitmqctl delete_user [username]
 docker exec rabbitmq rabbitmqctl add_vhost [vhost_name]
 ```
 
+## Create Binding
+```shell
+docker exec rabbitmq rabbitmqadmin declare exchange --vhost=[virtual host name] name=[binding name] type=topic -u [username] -p [password] durable=true
+```
+## Add binding permission
+```shell
+docker exec rabbitmq rabbitmqctl set_topic_permissions -p [vhost] [username] [bindingname] "^customers.*" "^customers.*"
+```
