@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -34,4 +35,24 @@ func (rc RabbitClient) Close() error {
 func (rc RabbitClient) CreateQueue(queueName string, durable bool, autoDelete bool) error {
 	_, err := rc.ch.QueueDeclare(queueName, durable, autoDelete, false, false, nil)
 	return err
+}
+
+func (rc RabbitClient) CreateBinding(name string, binding string, exchange string) error {
+	return rc.ch.QueueBind(name, binding, exchange, false, nil)
+}
+
+func (rc RabbitClient) Send(ctx context.Context, exchange string, routingKey string, options amqp.Publishing) error {
+	return rc.ch.PublishWithContext(
+		ctx,
+		exchange,
+		routingKey,
+		// Mandatory is used to determine if an error should be return upon failure
+		true,
+		false,
+		options,
+	)
+}
+
+func (rc RabbitClient) Consume(queue string, consumer string, autoAck bool) (<-chan amqp.Delivery, error) {
+	return rc.ch.Consume(queue, consumer, autoAck, false, false, false, nil)
 }
