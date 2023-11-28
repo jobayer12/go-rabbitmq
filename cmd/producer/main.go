@@ -43,20 +43,22 @@ func main() {
 
 	defer cancel()
 
-	if err := client.Send(ctx, "customer_events", "customers.created.us", amqp.Publishing{
-		ContentType:  "plain/text",
-		DeliveryMode: amqp.Persistent,
-		Body:         []byte(`A cool message`),
-	}); err != nil {
-		panic(err)
-	}
+	for i := 0; i < 10; i++ {
+		if err := client.Send(ctx, "customer_events", "customers.created.us", amqp.Publishing{
+			ContentType:  "plain/text",
+			DeliveryMode: amqp.Persistent,
+			Body:         []byte(`A cool message`),
+		}); err != nil {
+			panic(err)
+		}
 
-	if err := client.Send(ctx, "customer_events", "customers.test", amqp.Publishing{
-		ContentType:  "plain/text",
-		DeliveryMode: amqp.Transient,
-		Body:         []byte(`An uncool message`),
-	}); err != nil {
-		panic(err)
+		if err := client.Send(ctx, "customer_events", "customers.test", amqp.Publishing{
+			ContentType:  "plain/text",
+			DeliveryMode: amqp.Transient,
+			Body:         []byte(`An uncool message`),
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	time.Sleep(10 * time.Second)
