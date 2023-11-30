@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"eventdrivenrabbit/internal"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"time"
@@ -22,6 +23,21 @@ func main() {
 		panic(err)
 	}
 	defer client.Close()
+
+	// publish message after consuming
+	publishConn, err := internal.ConnectRabbitMQ("jobayer", "jobayer", "localhost:5672", "customers")
+	if err != nil {
+		panic(err)
+	}
+
+	defer publishConn.Close()
+
+	publishClient, err := internal.NewRabbitMQClient(publishConn)
+
+	if err != nil {
+		panic(err)
+	}
+	defer publishClient.Close()
 
 	messageBus, err := client.Consume("customers_created", "email-service", false)
 	if err != nil {
@@ -46,6 +62,14 @@ func main() {
 				if err := msg.Ack(false); err != nil {
 					log.Println("Ack message failed")
 					return err
+				}
+				if err := publishClient.Send(ctx, "customer_callbacks", msg.ReplyTo, amqp.Publishing{
+					ContentType:   "text/plain",
+					DeliveryMode:  amqp.Persistent,
+					Body:          []byte("RPC COMPLETE"),
+					CorrelationId: msg.CorrelationId,
+				}); err != nil {
+					panic(err)
 				}
 				log.Println("Acknowledge message", msg.MessageId)
 				return nil

@@ -36,9 +36,14 @@ func (rc RabbitClient) Close() error {
 	return rc.ch.Close()
 }
 
-func (rc RabbitClient) CreateQueue(queueName string, durable bool, autoDelete bool) error {
-	_, err := rc.ch.QueueDeclare(queueName, durable, autoDelete, false, false, nil)
-	return err
+// CreateQueue will create a new queue based on given cfgs
+func (rc RabbitClient) CreateQueue(queueName string, durable, autoDelete bool) (amqp.Queue, error) {
+	q, err := rc.ch.QueueDeclare(queueName, durable, autoDelete, false, false, nil)
+	if err != nil {
+		return amqp.Queue{}, nil
+	}
+
+	return q, nil
 }
 
 func (rc RabbitClient) CreateBinding(name string, binding string, exchange string) error {
